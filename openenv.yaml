@@ -1,0 +1,20 @@
+version: "1.0"
+name: "email_triage"
+project: "email_triage"
+
+environment:
+  # Format is filename:ClassName
+  entrypoint: "env:EmailTriageEnv"
+
+tasks:
+  - name: "easy_invoice"
+    description: "Move the AWS invoice to the invoices folder."
+    grader: "tasks:grade_easy_task"
+    
+  - name: "medium_support"
+    description: "Move the angry customer email to the support folder."
+    grader: "tasks:grade_medium_task"
+    
+  - name: "hard_hr"
+    description: "Archive the mandatory HR training email."
+    grader: "tasks:grade_hard_task"
