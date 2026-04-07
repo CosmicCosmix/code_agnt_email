@@ -5,10 +5,10 @@ from openai import OpenAI
 from env import EmailTriageEnv, VALID_FOLDERS
 from models import TriageAction
 from tasks import grade_easy_task, grade_medium_task, grade_hard_task
-# CONFIGURATION — all credentials come from environment variables
+# CONFIGURATION all credentials come from environment variables
 API_BASE_URL = os.getenv("API_BASE_URL", "https://router.huggingface.co/v1")
 MODEL_NAME   = os.getenv("MODEL_NAME",   "Qwen/Qwen2.5-72B-Instruct")
-API_KEY      = os.getenv("HF_TOKEN") or os.getenv("API_KEY", "dummy-key")
+HF_TOKEN     = os.getenv("HF_TOKEN")
 # MANDATORY LOG FORMAT  (do not alter — judges parse these lines)
 def log_start(task: str, env: str, model: str) -> None:
     print(f"[START] task={task} env={env} model={model}", flush=True)
@@ -95,9 +95,9 @@ async def run_task(task_name: str, grader, client: OpenAI) -> float:
     success     = final_score >= 0.5
     log_end(success, steps_taken, final_score, rewards)
     return final_score
-# MAIN — runs all 3 tasks sequentially
+# MAIN runs all 3 tasks sequentially
 async def main():
-    client = OpenAI(base_url=API_BASE_URL, api_key=API_KEY)
+    client = OpenAI(base_url=API_BASE_URL, api_key=HF_TOKEN)
     tasks = [
         ("easy_personal",    grade_easy_task),
         ("medium_billing_hr", grade_medium_task),
