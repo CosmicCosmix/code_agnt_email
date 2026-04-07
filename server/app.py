@@ -1,3 +1,6 @@
+import sys
+import os
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 from fastapi import FastAPI
 from pydantic import BaseModel
 from env import EmailTriageEnv
@@ -15,3 +18,6 @@ def step(action: TriageAction):
 @app.get("/state")
 def state():
     return env.state()
+def main():
+    import uvicorn
+    uvicorn.run("server.app:app", host="0.0.0.0", port=7860)
