@@ -1,7 +1,5 @@
 from models import Email, TriageAction, TriageObservation, TriageReward
 from typing import Tuple, Any, List
-
-
 VALID_FOLDERS = {
     "Personal",
     "Billing",
@@ -11,11 +9,8 @@ VALID_FOLDERS = {
     "HR",
     "inbox",          
 }
-
-
 EMAILS: List[Email] = [
-
-    # ─ Personal (5 emails) 
+    # Personal (5 emails) 
     Email(
         id=1,
         sender="dr.rajan.clinic@gmail.com",
@@ -56,8 +51,7 @@ EMAILS: List[Email] = [
         correct_folder="Personal",
         category="personal",
     ),
-
-    # ── BILLING — Cloud & SaaS services (5 emails) ─────────────────────────
+    # BILLING — Cloud & SaaS services (5 emails)
     Email(
         id=6,
         sender="billing@aws.amazon.com",
@@ -98,8 +92,7 @@ EMAILS: List[Email] = [
         correct_folder="Billing",
         category="billing",
     ),
-
-    # ── CUSTOMER FEEDBACK — Suggestions (2 emails) ─────────────────────────
+    # CUSTOMER FEEDBACK — Suggestions (2 emails)
     Email(
         id=11,
         sender="meena.krishnan88@gmail.com",
@@ -116,8 +109,7 @@ EMAILS: List[Email] = [
         correct_folder="Feedback/Suggestion",
         category="suggestion",
     ),
-
-    # ── CUSTOMER FEEDBACK — Complaints (3 emails) ──────────────────────────
+    # CUSTOMER FEEDBACK — Complaints (3 emails)
     Email(
         id=13,
         sender="angry.user.2024@yahoo.com",
@@ -142,8 +134,7 @@ EMAILS: List[Email] = [
         correct_folder="Feedback/Complaint",
         category="complaint",
     ),
-
-    # ── CUSTOMER FEEDBACK — Queries (3 emails) ─────────────────────────────
+    # CUSTOMER FEEDBACK — Queries (3 emails) 
     Email(
         id=16,
         sender="santhosh.it.guy@gmail.com",
@@ -168,8 +159,7 @@ EMAILS: List[Email] = [
         correct_folder="Feedback/Query",
         category="query",
     ),
-
-    # ── HR / INTERNAL (2 emails) ────────────────────────────────────────────
+    # ── HR / INTERNAL (2 emails) 
     Email(
         id=19,
         sender="hr-noreply@yourcompany.io",
@@ -187,40 +177,31 @@ EMAILS: List[Email] = [
         category="hr",
     ),
 ]
-
-
-# ---------------------------------------------------------------------------
-# REWARD LOGIC — Gradient scoring, not binary
+# reward Logic — Gradient scoring, not binary
 #
-# The reward is calculated on a 0.0 → 1.0 scale:
-#
-#   1.0  — Perfect: correct folder, exactly right.
-#   0.6  — Close: moved to correct TOP-LEVEL folder but wrong subfolder
+#   1.0   Perfect: correct folder, exactly right.
+#   0.6   Close: moved to correct TOP-LEVEL folder but wrong subfolder
 #           e.g. moved a Complaint to "Feedback/Suggestion" instead of
 #           "Feedback/Complaint". The AI understood it was feedback but
 #           misclassified the type.
-#   0.2  — Attempted: moved email out of inbox to some valid folder,
+#   0.2   Attempted: moved email out of inbox to some valid folder,
 #           but the folder is completely wrong.
-#   0.0  — Invalid: used a folder name that doesn't exist in VALID_FOLDERS,
+#   0.0   Invalid: used a folder name that doesn't exist in VALID_FOLDERS,
 #           or tried to move an email that is already in its correct folder
 #           (no-op repeated action).
-#  -0.1  — Hallucination: referenced an email ID that does not exist.
-# ---------------------------------------------------------------------------
+#  -0.1   Hallucination: referenced an email ID that does not exist.
 def calculate_reward(email: Email, target_folder: str) -> Tuple[float, str]:
     """
     Returns (reward_score, reason_string) for moving `email` to `target_folder`.
     """
     correct = email.correct_folder
-
-    # ── Invalid folder name ─────────────────────────────────────────────────
+    # Invalid folder name 
     if target_folder not in VALID_FOLDERS:
         return 0.0, f"'{target_folder}' is not a recognised folder. No reward given."
-
-    # ── Perfect placement ───────────────────────────────────────────────────
+    # Perfect placement 
     if target_folder == correct:
         return 1.0, f"Perfect. Email {email.id} correctly placed in '{correct}'."
-
-    # ── Close: correct top-level, wrong subfolder ───────────────────────────
+    # Close: correct top level, wrong subfolder 
     # Applies when both the target and correct folder start with "Feedback/"
     correct_top = correct.split("/")[0]
     target_top  = target_folder.split("/")[0]
@@ -229,34 +210,26 @@ def calculate_reward(email: Email, target_folder: str) -> Tuple[float, str]:
             f"Partially correct. Email {email.id} is feedback but should be in "
             f"'{correct}', not '{target_folder}'."
         )
-
-    # ── Attempted: valid folder but wrong category entirely ─────────────────
+    # Attempted: valid folder but wrong category entirely 
     return 0.2, (
         f"Wrong folder. Email {email.id} should go to '{correct}', "
         f"not '{target_folder}'."
     )
-
-
-# ---------------------------------------------------------------------------
-# THE ENVIRONMENT
-# ---------------------------------------------------------------------------
+# the environment
 class EmailTriageEnv:
     def __init__(self):
         self.all_emails: list[Email] = []
-        self.max_steps: int = 30    # 20 emails, a little headroom for mistakes
+        self.max_steps: int = 30    # 20 emails
         self.current_step: int = 0
-
-    # ── reset() ─────────────────────────────────────────────────────────────
+    #  reset() 
     def reset(self) -> TriageObservation:
         """Load a fresh copy of all 20 emails into the inbox."""
         self.current_step = 0
-        # Deep-copy so repeated resets don't mutate the master list
         self.all_emails = [
             Email(**e.model_dump()) for e in EMAILS
         ]
         return self._get_observation("Environment reset. 20 emails loaded into inbox.")
-
-    # ── state() ─────────────────────────────────────────────────────────────
+    #  state() 
     def state(self) -> Any:
         """Return the raw internal state for inspection."""
         return {
@@ -264,20 +237,17 @@ class EmailTriageEnv:
             "max_steps": self.max_steps,
             "emails": [e.model_dump() for e in self.all_emails],
         }
-
-    # ── step() ──────────────────────────────────────────────────────────────
+    # step() 
     def step(self, action: TriageAction) -> Tuple[TriageObservation, float, bool, dict]:
         """
         Process one AI action.
         Returns: (observation, reward, done, info)
         """
         self.current_step += 1
-
         # 1. Find the email the AI referenced
         target_email = next(
             (e for e in self.all_emails if e.id == action.email_id), None
         )
-
         # 2. Handle hallucinated IDs
         if not target_email:
             obs = self._get_observation(
@@ -285,25 +255,19 @@ class EmailTriageEnv:
             )
             done = self._is_done()
             return obs, -0.1, done, {"reason": f"Unknown email ID {action.email_id}"}
-
         # 3. Calculate reward BEFORE moving the email
         reward, reason = calculate_reward(target_email, action.target_folder)
-
-        # 4. Move the email (even if wrong — the AI must learn from the reward)
+        # 4. Move the email 
         target_email.folder = action.target_folder
-
         # 5. Check episode termination
         done = self._is_done()
-
         obs = self._get_observation(reason)
         return obs, reward, done, {"reason": reason}
-
-    # ── helpers ─────────────────────────────────────────────────────────────
+    #  helpers 
     def _is_done(self) -> bool:
         """Episode ends when inbox is empty or step budget is exhausted."""
         inbox_count = sum(1 for e in self.all_emails if e.folder == "inbox")
         return inbox_count == 0 or self.current_step >= self.max_steps
-
     def _get_observation(self, message: str) -> TriageObservation:
         """Return only the emails still sitting in the inbox."""
         inbox_emails = [e for e in self.all_emails if e.folder == "inbox"]

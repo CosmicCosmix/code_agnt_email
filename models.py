@@ -5,9 +5,9 @@ class Email(BaseModel):
     sender: str
     subject: str
     body: str
-    folder: str = "inbox"           # Where the email currently sits
-    correct_folder: str = "inbox"   # Ground truth — where it SHOULD go
-    category: str = "unknown"       # Human-readable label: "billing", "complaint", etc.
+    folder: str = "inbox"           # where the email currently is
+    correct_folder: str = "inbox"   
+    category: str = "unknown"       # person readable label: "billing", "complaint", etc.
 class TriageAction(BaseModel):
     email_id: int
     target_folder: str
