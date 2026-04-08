@@ -1,4 +1,16 @@
 from env import EmailTriageEnv
+
+def clamp_score(score: float) -> float:
+    """
+    Hackathon Phase 2 Validator Fix: 
+    Ensures scores are STRICTLY between 0 and 1 (not 0.0 and not 1.0).
+    """
+    if score <= 0.0:
+        return 0.01
+    elif score >= 1.0:
+        return 0.99
+    return round(score, 2)
+
 def grade_easy_task(env: EmailTriageEnv) -> float:
     """
     EASY: Did the AI correctly move all Personal emails to 'Personal'?
@@ -8,11 +20,14 @@ def grade_easy_task(env: EmailTriageEnv) -> float:
     personal_ids = {1, 2, 3, 4, 5}
     personal_emails = [e for e in env.all_emails if e.id in personal_ids]
     if not personal_emails:
-        return 0.0
+        return 0.01  # Clamped from 0.0
+        
     correct_count = sum(
         1 for e in personal_emails if e.folder == e.correct_folder
     )
-    return round(correct_count / len(personal_emails), 2)
+    raw_score = correct_count / len(personal_emails)
+    return clamp_score(raw_score)
+
 def grade_medium_task(env: EmailTriageEnv) -> float:
     """
     MEDIUM: Did the AI correctly move Billing (IDs 6–10) and HR (IDs 19–20)?
@@ -23,11 +38,14 @@ def grade_medium_task(env: EmailTriageEnv) -> float:
     billing_and_hr_ids = {6, 7, 8, 9, 10, 19, 20}
     target_emails = [e for e in env.all_emails if e.id in billing_and_hr_ids]
     if not target_emails:
-        return 0.0
+        return 0.01  # Clamped from 0.0
+        
     correct_count = sum(
         1 for e in target_emails if e.folder == e.correct_folder
     )
-    return round(correct_count / len(target_emails), 2)
+    raw_score = correct_count / len(target_emails)
+    return clamp_score(raw_score)
+
 def grade_hard_task(env: EmailTriageEnv) -> float:
     """
     HARD: Did the AI correctly sort all Customer Feedback emails into the
@@ -44,8 +62,10 @@ def grade_hard_task(env: EmailTriageEnv) -> float:
     feedback_ids = {11, 12, 13, 14, 15, 16, 17, 18}
     feedback_emails = [e for e in env.all_emails if e.id in feedback_ids]
     if not feedback_emails:
-        return 0.0
+        return 0.01  # Clamped from 0.0
+        
     correct_count = sum(
         1 for e in feedback_emails if e.folder == e.correct_folder
     )
-    return round(correct_count / len(feedback_emails), 2)
+    raw_score = correct_count / len(feedback_emails)
+    return clamp_score(raw_score)
