@@ -1,16 +1,19 @@
 version: "1.0"
 name: "email_triage"
 project: "email_triage"
+
 environment:
-  # Format is filename:ClassName
   entrypoint: "env:EmailTriageEnv"
+
 tasks:
-  - name: "easy_invoice"
-    description: "Move the AWS invoice to the invoices folder."
+  - name: "easy_personal"
+    description: "Sort all 5 personal emails (appointments, social, promotional, personal bank alerts) into the Personal folder."
     grader: "tasks:grade_easy_task"
-  - name: "medium_support"
-    description: "Move the angry customer email to the support folder."
+
+  - name: "medium_billing_hr"
+    description: "Sort 5 cloud/SaaS billing invoices into the Billing folder and 2 internal HR notices into the HR folder."
     grader: "tasks:grade_medium_task"
-  - name: "hard_hr"
-    description: "Archive the mandatory HR training email."
+
+  - name: "hard_feedback"
+    description: "Sort 8 customer feedback emails into the correct Feedback subfolder: Feedback/Suggestion, Feedback/Complaint, or Feedback/Query. All senders use civilian email addresses."
     grader: "tasks:grade_hard_task"
